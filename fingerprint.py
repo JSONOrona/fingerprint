@@ -24,6 +24,7 @@ __status__ = "Production"
 import hashlib
 from os.path import normpath, walk, isdir, isfile, dirname, basename, \
         exists as path_exists, join as path_join
+import syslog
 
 #TODO: Log to syslog, stdout, stdin, stderror and it's own audit log(maybe)
 #TODO: Add ability to pass file and paths through a config file
@@ -75,10 +76,14 @@ def main():
     main()
 
     Main program block.
-
-    Returns a string.
     """
-    print path_checksum(['/etc/*.conf'])
+    chksum = path_checksum(['/etc/*.conf'])
+    try:
+        syslog.openlog(logoption=syslog.LOG_PID)
+        syslog.syslog(syslog.LOG_INFO, 'Checksum processing started...')
+        syslog.syslog(syslog.LOG_INFO, 'Checksum #: %s'.format(chksum))
+    except IOError:
+        print chksum
     return
 
 if __name__ == '__main__':
