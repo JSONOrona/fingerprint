@@ -26,9 +26,6 @@ from os.path import normpath, walk, isdir, isfile, dirname, basename, \
         exists as path_exists, join as path_join
 import syslog
 
-#TODO: Log to syslog, stdout, stdin, stderror and it's own audit log(maybe)
-#TODO: Add ability to pass file and paths through a config file
-
 def path_checksum(paths):
     """
     path_checksum()
@@ -43,7 +40,7 @@ def path_checksum(paths):
 
     def _update_checksum(checksum, dirname, filenames):
         '''
-        _update_checksum
+        _update_checksum()
 
         A private function that updates the checksum
         valuse with each newly passed file.
@@ -77,11 +74,21 @@ def main():
 
     Main program block.
     """
-    chksum = path_checksum(['/etc/*.conf'])
+    paths = [ '/opt/conf/config.properties',
+              '/opt/jboss/jboss7/(bundles, modules)',
+              '/opt/jboss/jboss7/standalone/lib/',
+              '/opt/jboss/jboss7/standalone/deployments/!(ehms.ear.*)',
+              '/etc/sysconfig/network-scripts/!(.*bak.*)',
+              '/etc/sysconfig/!(network-scripts)'
+            ]
+    #paths = [ '.' ]
+    chksum = path_checksum(paths)
     try:
-        syslog.openlog(logoption=syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_INFO, 'Checksum processing started...')
-        syslog.syslog(syslog.LOG_INFO, 'Checksum #: %s'.format(chksum))
+        #syslog.openlog(logoption=syslog.LOG_PID)
+        print "Checksum processing started..."
+        #syslog.syslog(syslog.LOG_INFO, 'Checksum processing started...')
+        print 'Checksum #: %s' % (chksum)
+        #syslog.syslog(syslog.LOG_INFO, 'Checksum #: %s' % (chksum))
     except IOError:
         print chksum
     return
