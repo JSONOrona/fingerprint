@@ -56,3 +56,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Test folder
+test/
+fabfile.py

@@ -21,10 +21,26 @@ __maintainer__ = "Jason V. Orona"
 __email__ = "jason.orona@viverae.com"
 __status__ = "Production"
 
-import hashlib
+# Backwards compatibility for Python 2.4
+try:
+    import hashlib
+    h = hashlib.md5()
+except ImportError:
+    import md5
+    h = md5.new()
+
 from os.path import normpath, walk, isdir, isfile, dirname, basename, \
         exists as path_exists, join as path_join
-import syslog
+import fnmatch
+
+exclude_patterns = [ '*bak*', '*undeployed*', '*ear*' ]
+
+def _exclude(path, exclude_patterns):
+    for pattern in exclude_patterns:
+        if fnmatch.fnmatch(path, pattern):
+            return True
+        else:
+            return False
 
 def path_checksum(paths):
     """
@@ -49,8 +65,16 @@ def path_checksum(paths):
         '''
         for filename in sorted(filenames):
             path = path_join(dirname, filename)
+
+            if _exclude(path, exclude_patterns):
+                print "skipping %s" % (path)
+                continue
+            else:
+                pass
+                #print "Passed through is_ignore"
+
             if isfile(path):
-                print path
+                #print path
                 fh = file(path)
                 while 1:
                     file_buffer = fh.read(4096)
@@ -58,13 +82,15 @@ def path_checksum(paths):
                     checksum.update(file_buffer)
                 fh.close()
 
-    checksum = hashlib.sha1()
+    checksum = h
 
     for path in sorted([normpath(f) for f in paths]):
         if path_exists(path):
             if isdir(path):
+                #print  "Entered is directory condition"
                 walk(path, _update_checksum, checksum)
             elif isfile(path):
+                #print "Entered is file condition"
                 _update_checksum(checksum, dirname(path), basename(path))
     return checksum.hexdigest()
 
@@ -75,11 +101,12 @@ def main():
     Main program block.
     """
     paths = [ '/opt/conf/config.properties',
-              '/opt/jboss/jboss7/(bundles, modules)',
-              '/opt/jboss/jboss7/standalone/lib/',
-              '/opt/jboss/jboss7/standalone/deployments/!(ehms.ear.*)',
-              '/etc/sysconfig/network-scripts/!(.*bak.*)',
-              '/etc/sysconfig/!(network-scripts)'
+             # '/opt/jboss/jboss7/bundles',
+              #'/opt/jboss/jboss7/modules',
+              #'/opt/jboss/jboss7/standalone/lib/',
+              '/opt/jboss/jboss7/standalone/deployments/',
+              #'/etc/init.d', #causes checksum to change
+              '/etc/rc'
             ]
     #paths = [ '.' ]
     chksum = path_checksum(paths)
