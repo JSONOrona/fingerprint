@@ -29,11 +29,10 @@ except ImportError:
     import md5
     h = md5.new()
 
-from os.path import normpath, walk, isdir, isfile, dirname, basename, \
-        exists as path_exists, join as path_join
+import os
 import fnmatch
 
-exclude_patterns = [ '*bak*', '*undeployed*', '*ear*' ]
+exclude_patterns = [ 'attic',  '*bak*', '*undeployed*', '*deployed*' ]
 
 def _exclude(path, exclude_patterns):
     for pattern in exclude_patterns:
@@ -42,57 +41,40 @@ def _exclude(path, exclude_patterns):
         else:
             return False
 
-def path_checksum(paths):
-    """
-    path_checksum()
+def _update_checksum(filepath):
+    try:
+        f1 = open(filepath, 'rb')
+    except IOError:
+        print "Unable to open %s" % (filepath)
+        f1.close()
+    while 1:
+        file_buffer = f1.read(4096)
+        if not file_buffer : break
+        h.update(file_buffer)
+    f1.close()
 
-    Recursively calculates a check sum representing the contents of all files
-    found with a sequence of file and/or directory paths.
+def fingerprint(directory, verbose=0):
+    for d in directory:
+        d = os.path.normpath(d)
+        if _exclude(d, exclude_patterns):
+            continue
+        if not os.path.exists(d):
+            return -1
+        if os.path.isfile(d):
+            filepath = d
+            if verbose == 1:
+                print "Hashing %s" % (filepath)
+            _update_checksum(filepath)
+        else:
+            rootdir = d
+            file_list = sorted([f for (root, dirs, files) in os.walk(rootdir) for f in files])
+            for name in file_list:
+                if verbose == 1:
+                    print 'Hashing %s' % (name)
+                filepath = os.path.join(rootdir, name)
+                _update_checksum(filepath)
 
-    Returns a string.
-    """
-    if not hasattr(paths, '__iter__'):
-        raise TypeError('sequence or iterable expected not %r!' % type(paths))
-
-    def _update_checksum(checksum, dirname, filenames):
-        '''
-        _update_checksum()
-
-        A private function that updates the checksum
-        valuse with each newly passed file.
-
-        Returns the filename for auditing and logging purposes.
-        '''
-        for filename in sorted(filenames):
-            path = path_join(dirname, filename)
-
-            if _exclude(path, exclude_patterns):
-                print "skipping %s" % (path)
-                continue
-            else:
-                pass
-                #print "Passed through is_ignore"
-
-            if isfile(path):
-                #print path
-                fh = file(path)
-                while 1:
-                    file_buffer = fh.read(4096)
-                    if not file_buffer : break
-                    checksum.update(file_buffer)
-                fh.close()
-
-    checksum = h
-
-    for path in sorted([normpath(f) for f in paths]):
-        if path_exists(path):
-            if isdir(path):
-                #print  "Entered is directory condition"
-                walk(path, _update_checksum, checksum)
-            elif isfile(path):
-                #print "Entered is file condition"
-                _update_checksum(checksum, dirname(path), basename(path))
-    return checksum.hexdigest()
+    return h.hexdigest()
 
 def main():
     """
@@ -100,22 +82,16 @@ def main():
 
     Main program block.
     """
-    paths = [ '/opt/conf/config.properties',
-             # '/opt/jboss/jboss7/bundles',
-              #'/opt/jboss/jboss7/modules',
-              #'/opt/jboss/jboss7/standalone/lib/',
-              '/opt/jboss/jboss7/standalone/deployments/',
-              #'/etc/init.d', #causes checksum to change
-              '/etc/rc'
+    # Define directories that will be computed into the checksum
+    paths = [ #'/etc'
+              '/opt/conf/config.properties',
+              '/opt/jboss/jboss7/standalone/deployments/'
             ]
-    #paths = [ '.' ]
-    chksum = path_checksum(paths)
+
+    chksum = fingerprint(paths, 1)
     try:
-        #syslog.openlog(logoption=syslog.LOG_PID)
         print "Checksum processing started..."
-        #syslog.syslog(syslog.LOG_INFO, 'Checksum processing started...')
         print 'Checksum #: %s' % (chksum)
-        #syslog.syslog(syslog.LOG_INFO, 'Checksum #: %s' % (chksum))
     except IOError:
         print chksum
     return
