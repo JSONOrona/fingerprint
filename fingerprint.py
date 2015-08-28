@@ -32,8 +32,6 @@ except ImportError:
 import os
 import fnmatch
 
-exclude_patterns = [ 'attic',  '*bak*', '*undeployed*', '*deployed*' ]
-
 def _exclude(path, exclude_patterns):
     for pattern in exclude_patterns:
         if fnmatch.fnmatch(path, pattern):
@@ -42,6 +40,12 @@ def _exclude(path, exclude_patterns):
             return False
 
 def _update_checksum(filepath):
+    """
+    _update_checksum()
+
+    A private function that updates the checksum
+    valude after each iteration.
+    """
     try:
         f1 = open(filepath, 'rb')
     except IOError:
@@ -53,7 +57,13 @@ def _update_checksum(filepath):
         h.update(file_buffer)
     f1.close()
 
-def fingerprint(directory, verbose=0):
+def fingerprint(directory, exclude_patterns, verbose=0):
+    """
+    fingerprint()
+
+    Recursively calculates a checksum representing the contents of all files
+    found in a sequence o file and/or directory paths.
+    """
     for d in directory:
         d = os.path.normpath(d)
         if _exclude(d, exclude_patterns):
@@ -85,10 +95,14 @@ def main():
     # Define directories that will be computed into the checksum
     paths = [ #'/etc'
               '/opt/conf/config.properties',
-              '/opt/jboss/jboss7/standalone/deployments/'
-            ]
+              '/opt/jboss/jboss7/standalone/deployments/']
 
-    chksum = fingerprint(paths, 1)
+    # Define regex string patterns that should be excluded from checksum
+    exclude_patterns = [ '*undeployed*', '*.bak*' ]
+
+    # This does all the work
+    # For more verbosity make verbose=1
+    chksum = fingerprint(paths, exclude_patterns, verbose=0)
     try:
         print "Checksum processing started..."
         print 'Checksum #: %s' % (chksum)
