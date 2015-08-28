@@ -105,7 +105,7 @@ def main():
     chksum = fingerprint(paths, exclude_patterns, verbose=0)
     try:
         print "Checksum processing started..."
-        print 'Checksum #: %s' % (chksum)
+        print 'Checksum = %s' % (chksum)
     except IOError:
         print chksum
     return
