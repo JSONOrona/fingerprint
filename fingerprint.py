@@ -13,13 +13,12 @@ to a file or if a new file is added.
 """
 
 __author___ = "Jason V. Orona"
-__copyright__ = "Copyright 2015, Viverae, Inc."
+__copyright__ = "Copyright 2015, Jason v. Orona"
 __credits__ = "Jason V. Orona"
 __license__ =  "MIT License"
 __version__ = 1.0
 __maintainer__ = "Jason V. Orona"
-__email__ = "jason.orona@viverae.com"
-__status__ = "Production"
+__email__ = "jasonorona@gmail.com
 
 # Backwards compatibility for Python 2.4
 try:
@@ -93,12 +92,12 @@ def main():
     Main program block.
     """
     # Define directories that will be computed into the checksum
-    paths = [ #'/etc'
-              '/opt/conf/config.properties',
-              '/opt/jboss/jboss7/standalone/deployments/']
+    paths = [ '/etc',
+              '/bin',
+              '/boot' ]
 
     # Define regex string patterns that should be excluded from checksum
-    exclude_patterns = [ '*undeployed*', '*.bak*' ]
+    exclude_patterns = [ '*.bak*' ]
 
     # This does all the work
     # For more verbosity make verbose=1
